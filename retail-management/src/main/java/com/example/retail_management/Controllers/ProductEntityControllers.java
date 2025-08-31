@@ -19,12 +19,6 @@ public class ProductEntityControllers {
     @Autowired
     ProductEntityService service;
 
-    @PostMapping("/addProduct")
-    public ResponseEntity<?> createProduct(@RequestBody ProductEntity product) {
-        service.addProduct(product);
-        return ResponseEntity.status(HttpStatus.CREATED).body("Product created successfully");
-    }
-
     @GetMapping("/getAll")
     public ResponseEntity<?> getProducts(){
         List<ProductEntity> list =  service.getAllProducts();
@@ -33,6 +27,14 @@ public class ProductEntityControllers {
         }
         return new ResponseEntity<>(list, HttpStatus.OK);
     }
+
+    @PostMapping("/addProduct")
+    public ResponseEntity<?> createProduct(@RequestBody ProductEntity product) {
+        service.addProduct(product);
+        return ResponseEntity.status(HttpStatus.CREATED).body("Product created successfully");
+    }
+
+
 
     @GetMapping("/get/{id}")
     public ResponseEntity<?> searchProduct(@PathVariable String id){

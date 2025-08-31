@@ -3,16 +3,18 @@ package com.example.retail_management.Controllers;
 
 import com.example.retail_management.Dto.AuthRequest;
 import com.example.retail_management.Dto.AuthResponse;
+import com.example.retail_management.entity.ProductEntity;
 import com.example.retail_management.entity.UserEntity;
+import com.example.retail_management.services.ProductEntityService;
 import com.example.retail_management.services.UserEntityServices;
-import com.example.retail_management.util.JwtUtil;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpRequest;
 import org.springframework.http.HttpStatus;
 
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+//import org.springframework.security.authentication.AuthenticationManager;
+//import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -23,29 +25,34 @@ public class UserEntityControllers {
 
     @Autowired
     UserEntityServices userEntryServices;
+    ProductEntityService productEntityService;
 
-    @Autowired private AuthenticationManager authenticationManager;
-    @Autowired private JwtUtil jwtUtil;
+    @GetMapping("/")
+    public ResponseEntity<?> getProducts(){
+        List<ProductEntity> list =  productEntityService.getAllProducts();
+        if(list.isEmpty()) {
+            return new ResponseEntity<>("NO PRODUCTS FOUND", HttpStatus.NOT_FOUND);
+        }
+        return new ResponseEntity<>(list, HttpStatus.OK);
+    }
+
 
     @PostMapping("/login")
-    public ResponseEntity<?> loginUsers(@Valid @RequestBody AuthRequest request) {
-        try {
-            authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(request.username(), request.password()));
-        }catch (Exception ex){
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid credentials");
-        }
-        String token = jwtUtil.generateToken(request.username());
-        return ResponseEntity.ok(new AuthResponse(token));
-
+    public ResponseEntity<?> loginUsers(@Valid @RequestBody UserEntity user) {
+            if (userEntryServices.login(user))
+            {
+                return ResponseEntity.status(HttpStatus.OK).body("LOGGED IN");
+            }
+            return ResponseEntity.status(HttpStatus.CONFLICT).body("NO ACCOUNT FOUND, PLEASE SIGN IN");
     }
 
     @PostMapping("/signin")
     public ResponseEntity<?> signInUsers(@Valid @RequestBody UserEntity user){
-        boolean added = userEntryServices.signin(user);
-        if(added){
-            return new ResponseEntity<>("user successfully signed in", HttpStatus.CREATED);
+        if(userEntryServices.signin(user)){
+            return ResponseEntity.status(HttpStatus.OK).body("signed in");
         }
-        return new ResponseEntity<>("username "+ user.getUsername() +" already exists", HttpStatus.CONFLICT);
+        return ResponseEntity.status(HttpStatus.CONFLICT).body("email already exists, please login");
+
     }
 
 

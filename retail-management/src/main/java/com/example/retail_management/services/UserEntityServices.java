@@ -2,6 +2,7 @@ package com.example.retail_management.services;
 
 import com.example.retail_management.ManagementRepository.UserManagementRepo;
 import com.example.retail_management.entity.UserEntity;
+import org.apache.catalina.User;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -15,18 +16,23 @@ public class UserEntityServices {
     UserManagementRepo userManagementRepo;
 
     public boolean login(UserEntity user){
-        if(!userManagementRepo.existsByusername(user.getUsername())) {
-            return true;
+        Optional<UserEntity> Optuser = userManagementRepo.findByusername(user.getUsername());
+
+        if(Optuser.isPresent()){
+            UserEntity u = Optuser.get();
+            return user.getPassword().equals(u.getPassword());
         }
         return false;
     }
 
     public boolean signin(UserEntity user){
-        if(!userManagementRepo.existsByusername(user.getUsername())) {
-            userManagementRepo.save(user);
-            return true;
+        Optional<UserEntity> Optuser = userManagementRepo.findByusername(user.getUsername());
+
+        if(Optuser.isPresent()){
+            return false;
         }
-        return false;
+        userManagementRepo.save(user);
+        return true;
     }
 
 
