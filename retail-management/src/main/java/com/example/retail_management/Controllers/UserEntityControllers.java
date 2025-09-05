@@ -3,6 +3,7 @@ package com.example.retail_management.Controllers;
 
 import com.example.retail_management.Dto.AuthRequest;
 import com.example.retail_management.Dto.AuthResponse;
+import com.example.retail_management.config.JwtUtil;
 import com.example.retail_management.entity.ProductEntity;
 import com.example.retail_management.entity.UserEntity;
 import com.example.retail_management.services.ProductEntityService;
@@ -15,6 +16,10 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 //import org.springframework.security.authentication.AuthenticationManager;
 //import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -37,14 +42,35 @@ public class UserEntityControllers {
     }
 
 
+    @Autowired
+    private AuthenticationManager authenticationManager;
+
+    @Autowired
+    private JwtUtil jwtUtil; // only if you want to return JWT, else you can skip
+
     @PostMapping("/login")
     public ResponseEntity<?> loginUsers(@Valid @RequestBody UserEntity user) {
-            if (userEntryServices.login(user))
-            {
-                return ResponseEntity.status(HttpStatus.OK).body("LOGGED IN");
-            }
-            return ResponseEntity.status(HttpStatus.CONFLICT).body("NO ACCOUNT FOUND, PLEASE SIGN IN");
+        try {
+            // This will call DaoAuthenticationProvider behind the scenes
+            Authentication authentication = authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(
+                            user.getUsername(),
+                            user.getPassword() // raw password, Spring will check against encoded
+                    )
+            );
+
+            // If you want to set authentication context
+            SecurityContextHolder.getContext().setAuthentication(authentication);
+
+            // If you want JWT, generate and return
+            String token = jwtUtil.generateToken(authentication);
+
+            return ResponseEntity.ok("LOGGED IN ✅  Token: " + token);
+        } catch (Exception ex) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid username or password ❌");
+        }
     }
+
 
     @PostMapping("/signin")
     public ResponseEntity<?> signInUsers(@Valid @RequestBody UserEntity user){

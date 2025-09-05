@@ -2,8 +2,9 @@ package com.example.retail_management.services;
 
 import com.example.retail_management.ManagementRepository.UserManagementRepo;
 import com.example.retail_management.entity.UserEntity;
-import org.apache.catalina.User;
+
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -13,7 +14,9 @@ import java.util.Optional;
 public class UserEntityServices {
 
     @Autowired
-    UserManagementRepo userManagementRepo;
+    private UserManagementRepo userManagementRepo;
+
+    private BCryptPasswordEncoder encoder = new BCryptPasswordEncoder(12);
 
     public boolean login(UserEntity user){
         Optional<UserEntity> Optuser = userManagementRepo.findByusername(user.getUsername());
@@ -31,6 +34,7 @@ public class UserEntityServices {
         if(Optuser.isPresent()){
             return false;
         }
+        user.setPassword(encoder.encode(user.getPassword()));
         userManagementRepo.save(user);
         return true;
     }
